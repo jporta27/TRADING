@@ -1,0 +1,3 @@
+pyRofex
+pandas
+streamlit

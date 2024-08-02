@@ -1,3 +1,5 @@
+pip install -r requisitos.txt
+
 import pyRofex
 import time
 import pandas as pd

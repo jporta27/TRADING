@@ -3,6 +3,7 @@ import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
+import time
 
 # Configurar la conexión con pyRofex
 pyRofex.initialize(
@@ -12,46 +13,44 @@ pyRofex.initialize(
     environment=pyRofex.Environment.LIVE
 )
 
-# Función para obtener datos históricos
-def get_historical_data(ticker, start_date, end_date):
-    data = []
-    current_date = start_date
-    while current_date <= end_date:
-        response = pyRofex.get_market_data(
-            ticker=ticker,
-            entries=[pyRofex.MarketDataEntry.TRADE],
-            date_from=current_date.strftime('%Y-%m-%d'),
-            date_to=(current_date + timedelta(days=1)).strftime('%Y-%m-%d')
-        )
-        if 'marketData' in response and 'TRADES' in response['marketData']:
-            trades = response['marketData']['TRADES']
-            for trade in trades:
-                data.append({
-                    'date': trade['timestamp'],
-                    'price': trade['price'],
-                    'size': trade['size']
-                })
-        current_date += timedelta(days=1)
-    return pd.DataFrame(data)
+# Función para obtener datos actuales del mercado
+def get_market_data(ticker):
+    response = pyRofex.get_market_data(
+        ticker=ticker,
+        entries=[pyRofex.MarketDataEntry.BIDS, pyRofex.MarketDataEntry.OFFERS, pyRofex.MarketDataEntry.LAST]
+    )
+    return response
 
-# Obtener datos históricos del bono AL30
+# Ticker del bono AL30
 ticker = "MERV - XMEV - AL30 - CI"
-start_date = datetime(2023, 1, 1)  # Fecha de inicio (ajustar según sea necesario)
-end_date = datetime(2023, 12, 31)  # Fecha de fin (ajustar según sea necesario)
-data = get_historical_data(ticker, start_date, end_date)
+
+# Obtener datos actuales del mercado
+market_data = get_market_data(ticker)
+
+# Procesar la respuesta de la API
+if 'marketData' in market_data and 'LA' in market_data['marketData']:
+    last_trade = market_data['marketData']['LA']
+    data = pd.DataFrame([{
+        'date': datetime.now(),
+        'price': last_trade['price'],
+        'size': last_trade['size']
+    }])
+else:
+    st.error("No se pudieron obtener los datos de mercado del bono AL30.")
+    data = pd.DataFrame(columns=['date', 'price', 'size'])
 
 # Convertir la columna 'date' a formato datetime
 data['date'] = pd.to_datetime(data['date'])
 
 # Título de la aplicación
-st.title("Gráfico Histórico del Bono AL30")
+st.title("Gráfico de Datos de Mercado del Bono AL30")
 
 # Mostrar los datos en la aplicación
-st.subheader('Datos Históricos del AL30')
+st.subheader('Datos de Mercado del AL30')
 st.write(data)
 
 # Crear un gráfico
-st.subheader('Gráfico del Precio Histórico del AL30')
+st.subheader('Gráfico del Precio Actual del AL30')
 
 fig, ax = plt.subplots()
 ax.plot(data['date'], data['price'], label='Precio AL30')
@@ -85,3 +84,4 @@ ax_filtered.legend()
 
 # Mostrar el gráfico filtrado en Streamlit
 st.pyplot(fig_filtered)
+

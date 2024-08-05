@@ -34,7 +34,6 @@ intraday_data = []
 
 # Configurar la aplicación de Streamlit
 st.title("Datos Intradiarios del Bono AL30")
-placeholder = st.empty()
 
 # Función para manejar los datos de mercado recibidos
 def market_data_handler(message):
@@ -49,30 +48,28 @@ def market_data_handler(message):
                     'size': last_trade['size']
                 }
                 intraday_data.append(trade_data)
-                update_display()
     except Exception as e:
         st.error(f"Error procesando el mensaje de datos de mercado: {e}")
 
-# Función para actualizar la visualización en Streamlit
-def update_display():
-    try:
-        data_df = pd.DataFrame(intraday_data)
-        if not data_df.empty:
-            # Convertir la columna 'date' a formato datetime
-            data_df['date'] = pd.to_datetime(data_df['date'])
+# Función para graficar los datos almacenados
+def plot_data():
+    data_df = pd.DataFrame(intraday_data)
+    if not data_df.empty:
+        # Convertir la columna 'date' a formato datetime
+        data_df['date'] = pd.to_datetime(data_df['date'])
 
-            # Crear un gráfico
-            fig, ax = plt.subplots()
-            ax.plot(data_df['date'], data_df['price'], label='Precio AL30')
-            ax.set_xlabel('Fecha')
-            ax.set_ylabel('Precio')
-            ax.set_title('Evolución del Precio Intradiario del AL30')
-            ax.legend()
+        # Crear un gráfico
+        fig, ax = plt.subplots()
+        ax.plot(data_df['date'], data_df['price'], label='Precio AL30')
+        ax.set_xlabel('Fecha')
+        ax.set_ylabel('Precio')
+        ax.set_title('Evolución del Precio Intradiario del AL30')
+        ax.legend()
 
-            # Mostrar el gráfico en Streamlit
-            placeholder.pyplot(fig)
-    except Exception as e:
-        st.error(f"Error actualizando la visualización: {e}")
+        # Mostrar el gráfico en Streamlit
+        st.pyplot(fig)
+    else:
+        st.write("No hay datos disponibles para mostrar.")
 
 # Función para manejar errores
 def error_handler(message):
@@ -105,6 +102,10 @@ try:
     st.write("Suscripción a datos de mercado realizada correctamente.")
 except Exception as e:
     st.error(f"Error suscribiéndose a los datos de mercado: {e}")
+
+# Botón para graficar los datos almacenados
+if st.button('Mostrar Gráfico'):
+    plot_data()
 
 # Mantener la aplicación en ejecución para recibir datos en tiempo real
 st.write("Esperando datos en tiempo real del bono AL30...")

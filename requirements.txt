@@ -1,3 +1,4 @@
 pyRofex
 pandas
 streamlit
+matplotlib

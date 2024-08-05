@@ -13,6 +13,7 @@ try:
         "ws", "wss://api.lbo.xoms.com.ar/", pyRofex.Environment.LIVE
     )
     pyRofex._set_environment_parameter("proprietary", "API", pyRofex.Environment.LIVE)
+    st.write("Parámetros del entorno configurados correctamente.")
 except Exception as e:
     st.error(f"Error configurando los parámetros del entorno: {e}")
 
@@ -24,6 +25,7 @@ try:
         account="58035",
         environment=pyRofex.Environment.LIVE
     )
+    st.write("Entorno inicializado correctamente.")
 except Exception as e:
     st.error(f"Error inicializando el entorno: {e}")
 
@@ -74,11 +76,11 @@ def update_display():
 
 # Función para manejar errores
 def error_handler(message):
-    st.error(f"Error: {message}")
+    st.error(f"Error recibido: {message}")
 
 # Función para manejar excepciones
 def exception_handler(e):
-    st.error(f"Excepción: {e}")
+    st.error(f"Excepción recibida: {e}")
 
 # Inicializar la conexión WebSocket con los handlers
 try:
@@ -87,6 +89,7 @@ try:
         error_handler=error_handler,
         exception_handler=exception_handler,
     )
+    st.write("Conexión WebSocket inicializada correctamente.")
 except Exception as e:
     st.error(f"Error inicializando la conexión WebSocket: {e}")
 
@@ -99,8 +102,10 @@ try:
         tickers=[ticker],
         entries=[pyRofex.MarketDataEntry.LAST]
     )
+    st.write("Suscripción a datos de mercado realizada correctamente.")
 except Exception as e:
     st.error(f"Error suscribiéndose a los datos de mercado: {e}")
 
 # Mantener la aplicación en ejecución para recibir datos en tiempo real
 st.write("Esperando datos en tiempo real del bono AL30...")
+

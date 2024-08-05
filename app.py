@@ -1,71 +1,54 @@
-import pyRofex
-import time
 import pandas as pd
 import streamlit as st
+import matplotlib.pyplot as plt
 
-# Configurar la conexión con pyRofex
-pyRofex._set_environment_parameter(
-    "url", "https://api.lbo.xoms.com.ar/", pyRofex.Environment.LIVE
-)
-pyRofex._set_environment_parameter(
-    "ws", "wss://api.lbo.xoms.com.ar/", pyRofex.Environment.LIVE
-)
-pyRofex._set_environment_parameter("proprietary", "API", pyRofex.Environment.LIVE)
+# Título de la aplicación
+st.title("Gráfico Histórico del Bono AL30")
 
-# Inicializar el entorno
-pyRofex.initialize(
-    user="jporta",
-    password="JP$pm2024",
-    account="58035",
-    environment=pyRofex.Environment.LIVE
-)
+# Cargar los datos históricos desde un archivo CSV
+@st.cache
+def load_data():
+    data = pd.read_csv('AL30_historico.csv', parse_dates=['date'])
+    return data
 
-# Inicializar Streamlit
-st.title("Market Data Stream")
-data_placeholder = st.empty()
+data = load_data()
 
-def market_data_handler(message):
-    datos = {
-        "ticker": message["instrumentId"]["symbol"],
-        "bids": message["marketData"]["BI"],
-        "offer": message["marketData"]["OF"]
-    }
-    df_bids = pd.DataFrame(datos['bids'], columns=['price', 'size']).set_index("price")
-    df_offers = pd.DataFrame(datos['offer'], columns=['price', 'size']).set_index("price")
-    
-    ticker = datos['ticker']
-    
-    data_placeholder.subheader(f"Market Data for {ticker}")
-    data_placeholder.write("Bids:")
-    data_placeholder.dataframe(df_bids)
-    data_placeholder.write("Offers:")
-    data_placeholder.dataframe(df_offers)
+# Mostrar los datos en la aplicación
+st.subheader('Datos Históricos del AL30')
+st.write(data)
 
-def error_handler(message):
-    st.error(f"Error: {message}")
+# Crear un gráfico
+st.subheader('Gráfico del Precio Histórico del AL30')
 
-def exception_handler(e):
-    st.error(f"Exception Occurred: {e.msg}")
+fig, ax = plt.subplots()
+ax.plot(data['date'], data['price'], label='Precio AL30')
+ax.set_xlabel('Fecha')
+ax.set_ylabel('Precio')
+ax.set_title('Evolución del Precio del AL30')
+ax.legend()
 
-# Inicializar conexión WebSocket con los handlers
-pyRofex.init_websocket_connection(
-    market_data_handler=market_data_handler,
-    error_handler=error_handler,
-    exception_handler=exception_handler,
-)
+# Mostrar el gráfico en Streamlit
+st.pyplot(fig)
 
-# Suscribirse para recibir mensajes de datos del mercado
-instruments = [
-    "MERV - XMEV - AL30 - CI",
-    "MERV - XMEV - AL30D - CI",
-    "MERV - XMEV - AL30C - CI",
-    "MERV - XMEV - GD30 - CI",
-    "MERV - XMEV - GD30C - CI",
-    "MERV - XMEV - GD30D - CI"
-]
-entries = [
-    pyRofex.MarketDataEntry.BIDS,
-    pyRofex.MarketDataEntry.OFFERS,
-]
+# Opcional: agregar controles de filtrado en la aplicación
+st.sidebar.header("Opciones de Filtrado")
+start_date = st.sidebar.date_input("Fecha de inicio", data['date'].min())
+end_date = st.sidebar.date_input("Fecha de fin", data['date'].max())
 
-pyRofex.market_data_subscription(tickers=instruments, entries=entries, depth=5)
+# Filtrar los datos según las fechas seleccionadas
+filtered_data = data[(data['date'] >= pd.to_datetime(start_date)) & (data['date'] <= pd.to_datetime(end_date))]
+
+# Mostrar los datos filtrados en la aplicación
+st.subheader('Datos Filtrados')
+st.write(filtered_data)
+
+# Crear un gráfico con los datos filtrados
+fig_filtered, ax_filtered = plt.subplots()
+ax_filtered.plot(filtered_data['date'], filtered_data['price'], label='Precio AL30')
+ax_filtered.set_xlabel('Fecha')
+ax_filtered.set_ylabel('Precio')
+ax_filtered.set_title('Evolución del Precio del AL30 (Filtrado)')
+ax_filtered.legend()
+
+# Mostrar el gráfico filtrado en Streamlit
+st.pyplot(fig_filtered)
